@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>G4MEOVER — Security &amp; RF Lab</title>
+<meta name="description" content="Yanis Ameseder · G4MEOVER18 — Security Research, Embedded &amp; RF. Tools, Firmware-Flasher und Projekte an einem Ort.">
+<meta property="og:title" content="G4MEOVER — Security &amp; RF Lab">
+<meta property="og:description" content="Security Research · Embedded · RF. Interaktiver Tool-Hub, ESP32-Web-Flasher und Flipper-Firmware.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0e16'/%3E%3Cpath d='M4 20 L9 20 L11 12 L14 24 L17 8 L20 20 L28 20' fill='none' stroke='%2300e5c7' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   G4MEOVER — Security & RF Lab
+   Layout: Terminal/Dashboard-Hub. Sticky-Nav, Spektrum-Hero,
+   datengetriebener Tool-Explorer, Web-Flasher, Support, Bio.
+   Motiv: SDR-Wasserfall (Signal-Cyan → Spektral-Magenta).
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* Dark-first: diese Werte gelten als Standard (bare :root) */
+  --bg:        #080b12;
+  --bg-2:      #0d1220;
+  --surface:   #111829;
+  --surface-2: #161f33;
+  --line:      #24304a;
+  --fg:        #e8edf7;
+  --fg-dim:    #9aa7c2;
+  --fg-mute:   #68758f;
+  --signal:    #00e5c7;  /* primär: Signal-Cyan */
+  --signal-dim:#0a8f82;
+  --spectral:  #ff4d8d;  /* Akzent: Spektral-Magenta, sparsam */
+  --amber:     #ffb454;  /* CTA / Support warm */
+  --ok:        #3ddc84;
+  --warn:      #ffb454;
+  --crit:      #ff5c5c;
+  --shadow:    0 14px 40px -18px rgba(0,0,0,.75);
+  --radius:    14px;
+  color-scheme: dark;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+}
+:root[data-theme="light"] {
+  --bg:        #f4f6fb;
+  --bg-2:      #eaeef7;
+  --surface:   #ffffff;
+  --surface-2: #f0f3fa;
+  --line:      #d6ddea;
+  --fg:        #16202f;
+  --fg-dim:    #44526b;
+  --fg-mute:   #74819a;
+  --signal:    #00897b;
+  --signal-dim:#4db6ac;
+  --spectral:  #d81b6a;
+  --amber:     #c97a1c;
+  --ok:        #1f9d57;
+  --shadow:    0 14px 36px -20px rgba(20,40,80,.3);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:#f4f6fb; --bg-2:#eaeef7; --surface:#fff; --surface-2:#f0f3fa;
+    --line:#d6ddea; --fg:#16202f; --fg-dim:#44526b; --fg-mute:#74819a;
+    --signal:#00897b; --signal-dim:#4db6ac; --spectral:#d81b6a; --amber:#c97a1c;
+    --ok:#1f9d57; --shadow:0 14px 36px -20px rgba(20,40,80,.3);
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: var(--signal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1,h2,h3 { font-family: var(--font-display); line-height: 1.12; text-wrap: balance; margin: 0; letter-spacing: .3px; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: 100%; max-width: 1180px; margin-inline: auto;
+  padding-left: max(18px, env(safe-area-inset-left,0px));
+  padding-right: max(18px, env(safe-area-inset-right,0px)); }
+.eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--signal); font-weight: 500; }
+.muted { color: var(--fg-dim); }
+section { padding-block: clamp(48px, 7vw, 92px); }
+.sec-head { max-width: 640px; margin-bottom: 34px; }
+.sec-head h2 { font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 700; margin: 10px 0 12px; }
+.sec-head p { color: var(--fg-dim); margin: 0; font-size: 1.02rem; }
+
+/* ── Top-Nav ───────────────────────────────────────────── */
+body::before { content:""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top,0px);
+  background: var(--bg-2); z-index: 60; }
+.nav { position: sticky; top: env(safe-area-inset-top,0px); z-index: 50;
+  background: color-mix(in srgb, var(--bg-2) 86%, transparent);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.nav-inner { display: flex; align-items: center; gap: 18px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display);
+  font-weight: 700; font-size: 1.12rem; letter-spacing: 1px; color: var(--fg); }
+.brand:hover { text-decoration: none; }
+.brand .logo { width: 30px; height: 30px; flex: none; }
+.brand b { color: var(--signal); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+.nav-links a { font-family: var(--font-mono); font-size: .82rem; color: var(--fg-dim);
+  padding: 8px 12px; border-radius: 8px; }
+.nav-links a:hover { color: var(--fg); background: var(--surface); text-decoration: none; }
+.theme-btn { background: var(--surface); border: 1px solid var(--line); color: var(--fg-dim);
+  width: 38px; height: 38px; border-radius: 9px; cursor: pointer; font-size: 1rem; flex: none;
+  display: grid; place-items: center; }
+.theme-btn:hover { color: var(--signal); border-color: var(--signal-dim); }
+.nav-toggle { display: none; }
+
+/* ── Hero ──────────────────────────────────────────────── */
+.hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line);
+  background: radial-gradient(120% 80% at 80% -10%, color-mix(in srgb,var(--signal) 10%, transparent), transparent 60%), var(--bg); }
+#spectrum { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .5; }
+.hero .wrap { position: relative; z-index: 1; padding-block: clamp(56px, 10vw, 120px); }
+.hero-grid { display: grid; grid-template-columns: 1.4fr .9fr; gap: 40px; align-items: center; }
+.hero h1 { font-size: clamp(2.3rem, 6.5vw, 4.3rem); font-weight: 700; margin: 16px 0 18px; }
+.hero h1 .accent { color: var(--signal); }
+.hero .lead { font-size: clamp(1.05rem, 2.2vw, 1.28rem); color: var(--fg-dim); max-width: 46ch; margin: 0 0 28px; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
+.tag { font-family: var(--font-mono); font-size: .74rem; color: var(--fg-dim);
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 60%, transparent);
+  padding: 5px 11px; border-radius: 20px; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { font-family: var(--font-display); font-weight: 600; font-size: .95rem; letter-spacing: .4px;
+  padding: 13px 22px; border-radius: 11px; border: 1px solid transparent; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 9px; transition: transform .12s ease, background .2s; }
+.btn:hover { text-decoration: none; transform: translateY(-2px); }
+.btn-primary { background: var(--signal); color: #04120f; }
+.btn-primary:hover { background: color-mix(in srgb, var(--signal) 85%, #fff); }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--fg); }
+.btn-ghost:hover { border-color: var(--signal); color: var(--signal); }
+.btn-amber { background: var(--amber); color: #2a1803; }
+.btn-amber:hover { background: color-mix(in srgb, var(--amber) 85%, #fff); }
+
+.stat-card { background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line);
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stat { background: var(--surface); padding: 18px 16px; }
+.stat .num { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; color: var(--signal);
+  font-variant-numeric: tabular-nums; line-height: 1; }
+.stat .lbl { font-family: var(--font-mono); font-size: .68rem; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--fg-mute); margin-top: 7px; }
+.stat-card .note { font-family: var(--font-mono); font-size: .72rem; color: var(--fg-mute);
+  margin-top: 16px; display: flex; align-items: center; gap: 8px; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 70%, transparent); animation: pulse 2.4s infinite; }
+@keyframes pulse { 0%{ box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%, transparent);} 70%{ box-shadow:0 0 0 9px transparent;} 100%{ box-shadow:0 0 0 0 transparent;} }
+@media (prefers-reduced-motion: reduce){ .pulse{ animation:none; } }
+
+/* ── Tool-Explorer ─────────────────────────────────────── */
+.explorer-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 22px; }
+.search { flex: 1 1 260px; min-width: 0; position: relative; }
+.search input { width: 100%; background: var(--surface); border: 1px solid var(--line); color: var(--fg);
+  font-family: var(--font-mono); font-size: .9rem; padding: 12px 14px 12px 40px; border-radius: 11px; }
+.search input::placeholder { color: var(--fg-mute); }
+.search input:focus { outline: none; border-color: var(--signal-dim); }
+.search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--fg-mute); }
+.sort-sel { background: var(--surface); border: 1px solid var(--line); color: var(--fg-dim);
+  font-family: var(--font-mono); font-size: .82rem; padding: 11px 14px; border-radius: 11px; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+.chip { font-family: var(--font-mono); font-size: .8rem; color: var(--fg-dim); cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); padding: 7px 14px; border-radius: 20px;
+  transition: all .15s; user-select: none; }
+.chip:hover { border-color: var(--signal-dim); color: var(--fg); }
+.chip[aria-pressed="true"] { background: var(--signal); border-color: var(--signal); color: #04120f; font-weight: 600; }
+.chip .c { opacity: .65; margin-left: 5px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; display: flex; flex-direction: column; gap: 12px; position: relative;
+  transition: border-color .18s, transform .18s; min-width: 0; }
+.card:hover { border-color: var(--signal-dim); transform: translateY(-3px); }
+.card.flag { border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+.card.flag::after { content: "★ Flagship"; position: absolute; top: 14px; right: 14px;
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--amber); }
+.card-head { display: flex; align-items: flex-start; gap: 10px; }
+.card h3 { font-size: 1.1rem; font-weight: 600; color: var(--fg); word-break: break-word; }
+.card h3 a { color: inherit; }
+.card h3 a:hover { color: var(--signal); }
+.card .desc { color: var(--fg-dim); font-size: .9rem; line-height: 1.55; flex: 1; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  font-family: var(--font-mono); font-size: .74rem; color: var(--fg-mute); }
+.lang-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: middle; }
+.card-links { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.pill { font-family: var(--font-mono); font-size: .72rem; padding: 4px 10px; border-radius: 7px;
+  border: 1px solid var(--line); color: var(--fg-dim); background: var(--surface-2); }
+.pill:hover { border-color: var(--signal-dim); color: var(--signal); text-decoration: none; }
+.pill.live { color: var(--ok); border-color: color-mix(in srgb,var(--ok) 40%, var(--line)); }
+.no-res { text-align: center; color: var(--fg-mute); font-family: var(--font-mono); padding: 40px; grid-column: 1/-1; }
+
+/* ── Flasher ───────────────────────────────────────────── */
+.flasher { background: var(--bg-2); border-block: 1px solid var(--line); }
+.flash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.flash-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px; display: flex; flex-direction: column; }
+.flash-panel h3 { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.flash-panel .badge { font-family: var(--font-mono); font-size: .66rem; text-transform: uppercase;
+  letter-spacing: 1px; padding: 3px 8px; border-radius: 6px; }
+.badge.web { background: color-mix(in srgb,var(--ok) 18%, transparent); color: var(--ok);
+  border: 1px solid color-mix(in srgb,var(--ok) 35%, transparent); }
+.badge.hub { background: color-mix(in srgb,var(--amber) 18%, transparent); color: var(--amber);
+  border: 1px solid color-mix(in srgb,var(--amber) 35%, transparent); }
+.flash-panel p { color: var(--fg-dim); font-size: .92rem; margin: 12px 0; }
+.field { margin: 14px 0; }
+.field label { font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--fg-mute); display: block; margin-bottom: 7px; }
+.field select { width: 100%; background: var(--surface-2); border: 1px solid var(--line); color: var(--fg);
+  font-family: var(--font-mono); font-size: .88rem; padding: 11px 13px; border-radius: 10px; cursor: pointer; }
+.fw-status { font-family: var(--font-mono); font-size: .78rem; margin: 10px 0 16px; min-height: 1.2em; color: var(--fg-dim); }
+esp-web-install-button { --esp-tools-button-color: #04120f; --esp-tools-button-bg-color: var(--signal); display: block; }
+.flash-cta { margin-top: auto; }
+.steps { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 10px; counter-reset: s; }
+.steps li { font-size: .88rem; color: var(--fg-dim); padding-left: 34px; position: relative; }
+.steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 0;
+  width: 23px; height: 23px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--signal); font-family: var(--font-mono); font-size: .76rem; display: grid; place-items: center; }
+.browser-note { font-family: var(--font-mono); font-size: .74rem; color: var(--warn);
+  background: color-mix(in srgb,var(--warn) 10%, transparent); border: 1px solid color-mix(in srgb,var(--warn) 30%, transparent);
+  border-radius: 9px; padding: 10px 12px; margin-top: 16px; }
+
+/* ── Support / Spenden ─────────────────────────────────── */
+.support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.donate-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.donate-card h3 { font-size: 1.2rem; }
+.donate-card .qr { width: 160px; height: 160px; background: #fff; border-radius: 12px; padding: 10px;
+  display: grid; place-items: center; }
+.donate-card .qr canvas, .donate-card .qr img { width: 100%; height: 100%; }
+.addr { font-family: var(--font-mono); font-size: .8rem; color: var(--fg-dim); word-break: break-all;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; width: 100%; }
+.copy-btn { font-family: var(--font-mono); font-size: .8rem; background: var(--surface-2);
+  border: 1px solid var(--line); color: var(--fg); padding: 9px 16px; border-radius: 9px; cursor: pointer; }
+.copy-btn:hover { border-color: var(--signal-dim); color: var(--signal); }
+.copy-btn.done { color: var(--ok); border-color: color-mix(in srgb,var(--ok) 40%, var(--line)); }
+
+/* ── Bio ───────────────────────────────────────────────── */
+.bio-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: start; }
+.bio-grid p { color: var(--fg-dim); }
+.quote { font-family: var(--font-display); font-size: 1.3rem; font-weight: 500; color: var(--fg);
+  border-left: 3px solid var(--signal); padding-left: 20px; margin: 24px 0; line-height: 1.4; }
+.skill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.flow { font-family: var(--font-mono); font-size: .82rem; color: var(--fg-dim); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; line-height: 2; }
+.flow b { color: var(--signal); }
+
+/* ── Footer ────────────────────────────────────────────── */
+footer { border-top: 1px solid var(--line); background: var(--bg-2); }
+.foot-inner { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between;
+  align-items: center; padding-block: 34px; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 18px; font-family: var(--font-mono); font-size: .82rem; }
+.foot-links a { color: var(--fg-dim); }
+.foot-links a:hover { color: var(--signal); }
+.foot-meta { font-family: var(--font-mono); font-size: .74rem; color: var(--fg-mute); }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .hero-grid, .flash-grid, .support-grid, .bio-grid { grid-template-columns: 1fr; }
+  .nav-links { position: fixed; inset: 60px 0 auto 0; flex-direction: column; align-items: stretch;
+    background: var(--bg-2); border-bottom: 1px solid var(--line); padding: 10px 18px 18px; gap: 2px;
+    transform: translateY(-120%); transition: transform .22s ease; }
+  .nav-links[data-open="true"] { transform: translateY(0); }
+  .nav-links a { padding: 12px; font-size: .9rem; }
+  .nav-toggle { display: grid; place-items: center; margin-left: auto; width: 40px; height: 40px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 9px; color: var(--fg); cursor: pointer; }
+  .theme-btn { order: 3; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a href="#top" class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0e16"/><path d="M4 20 L9 20 L11 12 L14 24 L17 8 L20 20 L28 20" fill="none" stroke="#00e5c7" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      G4ME<b>OVER</b>
+    </a>
+    <button class="nav-toggle" aria-label="Menü" aria-expanded="false" onclick="toggleNav()">☰</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#tools">Tools</a>
+      <a href="#flasher">Flasher</a>
+      <a href="#support">Support</a>
+      <a href="#about">Über mich</a>
+      <a href="https://github.com/G4MEOVER18" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="theme-btn" id="themeBtn" aria-label="Theme wechseln" onclick="toggleTheme()">◐</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero" id="top">
+  <canvas id="spectrum" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Security Research · Embedded · RF</span>
+        <h1>Ich zerlege Systeme,<br>um sie <span class="accent">robuster</span> zu machen.</h1>
+        <p class="lead">Yanis Ameseder — IT-Quereinsteiger aus St. Gallen. Eigene Tools, Flipper-Firmware, ESP32-Funknodes und ein zusammenwachsendes Hardware-Ökosystem. Alles offen, dokumentiert und an einem Ort.</p>
+        <div class="hero-tags">
+          <span class="tag">Flipper Zero</span>
+          <span class="tag">ESP32 / LoRa</span>
+          <span class="tag">SDR &amp; RF</span>
+          <span class="tag">Pentest-Tooling</span>
+          <span class="tag">Lokale KI</span>
+        </div>
+        <div class="cta-row">
+          <a href="#tools" class="btn btn-primary">⚡ Tools erkunden</a>
+          <a href="#flasher" class="btn btn-ghost">⬇ Firmware flashen</a>
+          <a href="#support" class="btn btn-amber">☕ Unterstützen</a>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-grid">
+          <div class="stat"><div class="num" id="stat-repos">—</div><div class="lbl">Öffentl. Repos</div></div>
+          <div class="stat"><div class="num" id="stat-stars">—</div><div class="lbl">GitHub Stars</div></div>
+          <div class="stat"><div class="num" id="stat-cats">—</div><div class="lbl">Kategorien</div></div>
+          <div class="stat"><div class="num" id="stat-fw">—</div><div class="lbl">Firmware-Targets</div></div>
+        </div>
+        <div class="note"><span class="pulse"></span> Live aus dem G4MEOVER-Katalog</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ═══ TOOLS ═══ -->
+<section id="tools">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">// Katalog</span>
+      <h2>Tool- &amp; Repo-Explorer</h2>
+      <p>Jedes öffentliche Projekt durchsuchbar und gefiltert. Firmware, Scanner, Apps und das Hardware-Ökosystem — mit Direktlinks zu Code, Wiki und Releases.</p>
+    </div>
+    <div class="explorer-bar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="search" placeholder="Suchen… z.B. 'lora', 'flipper', 'scanner'" aria-label="Projekte durchsuchen">
+      </div>
+      <select class="sort-sel" id="sort" aria-label="Sortierung">
+        <option value="stars">★ Meiste Stars</option>
+        <option value="name">A → Z</option>
+        <option value="recent">Zuletzt aktualisiert</option>
+      </select>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<!-- ═══ FLASHER ═══ -->
+<section id="flasher" class="flasher">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">// Web-Flasher</span>
+      <h2>Firmware direkt im Browser</h2>
+      <p>ESP32-Boards flasht du ohne Installation per Web Serial. Flipper-Zero-Firmware läuft über den qFlipper-/Web-Updater-Weg — beide hier an einem Ort.</p>
+    </div>
+    <div class="flash-grid">
+      <!-- ESP32 -->
+      <div class="flash-panel">
+        <h3>ESP32 &amp; Varianten <span class="badge web">Web Serial</span></h3>
+        <p>Board auswählen, per USB verbinden, flashen. Kein Download, kein Treiber-Theater.</p>
+        <div class="field">
+          <label for="fwSelect">Firmware-Target</label>
+          <select id="fwSelect" onchange="onFwChange()"></select>
+        </div>
+        <div class="fw-status" id="fwStatus"></div>
+        <div class="flash-cta" id="flashCta"></div>
+        <div class="browser-note">⚠ Web Serial braucht Chrome, Edge oder Opera (Desktop) über HTTPS. Firefox/Safari werden nicht unterstützt.</div>
+      </div>
+      <!-- Flipper -->
+      <div class="flash-panel">
+        <h3>Flipper Zero <span class="badge hub">Firmware-Hub</span></h3>
+        <p>Die G4MEOVER-Custom-Firmware (Momentum-Fork, API 87.1) mit <code>lora_ukfe</code>, CH-DE BadUSB und eigenem Branding.</p>
+        <ol class="steps">
+          <li>Neueste Firmware aus den <a href="https://github.com/G4MEOVER18/G4MEOVER-FW/releases" target="_blank" rel="noopener">G4MEOVER-FW Releases</a> laden (<code>.tgz</code>/<code>.dfu</code>).</li>
+          <li>Flipper per USB verbinden, qFlipper öffnen <em>oder</em> <a href="https://lab.flipper.net/" target="_blank" rel="noopener">lab.flipper.net</a> im Browser.</li>
+          <li>„Install from file" wählen und das Firmware-Paket einspielen.</li>
+          <li>Apps aus dem <a href="https://github.com/G4MEOVER18?tab=repositories&q=flipper" target="_blank" rel="noopener">FAP-Katalog</a> (ProtoPirate, RollForge, FlipperJammer…) per qFlipper nach <code>/ext/apps</code> kopieren.</li>
+        </ol>
+        <div class="flash-cta" style="margin-top:20px">
+          <a href="https://github.com/G4MEOVER18/G4MEOVER-FW/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">⬇ Neueste FW laden</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SUPPORT ═══ -->
+<section id="support">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">// Support</span>
+      <h2>Projekte unterstützen</h2>
+      <p>Alles hier ist Open Source und entsteht in meiner Freizeit. Hardware, Boards und Lab-Equipment kosten — jede Unterstützung fließt direkt zurück in die Projekte.</p>
+    </div>
+    <div class="support-grid">
+      <div class="donate-card">
+        <h3>☕ PayPal</h3>
+        <div class="qr" id="qr-pp"></div>
+        <div class="addr" id="pp-addr">paypal.me/Freakbank1</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <a href="https://paypal.me/Freakbank1" target="_blank" rel="noopener" class="btn btn-primary">Zu PayPal ↗</a>
+          <button class="copy-btn" data-copy="https://paypal.me/Freakbank1">Link kopieren</button>
+        </div>
+      </div>
+      <div class="donate-card">
+        <h3>₿ Bitcoin</h3>
+        <div class="qr" id="qr-btc"></div>
+        <div class="addr" id="btc-addr">39vZWmnUwDReQ15BwqQXzyqVQ6U8LardEf</div>
+        <button class="copy-btn" data-copy="39vZWmnUwDReQ15BwqQXzyqVQ6U8LardEf">Adresse kopieren</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ABOUT ═══ -->
+<section id="about" class="flasher">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">// Wer dahintersteckt</span>
+      <h2>Über mich</h2>
+    </div>
+    <div class="bio-grid">
+      <div>
+        <p>Ich komme ursprünglich aus dem Strassen- und Tiefbau — Baustellen geführt, Verantwortung übernommen, Probleme direkt an realen Systemen gelöst. Genau diese Arbeitsweise nutze ich heute für IT, Cybersecurity, Hardware, Automatisierung und lokale KI.</p>
+        <p>Meine IT-Kompetenz kommt aus eigenen Projekten, Fehlern, Logs, Debugging, Hardwaretests und wiederholbarem Aufbau. Seit August 2026 im <strong>TECH-Track der Digital Talents Academy</strong> am GBW St. Gallen.</p>
+        <blockquote class="quote">„Ich sehe nicht nur, was ist. Ich frage mich, was sein könnte — und was passiert, wenn jemand es ausnutzt."</blockquote>
+        <p class="muted">Sicherheit gehört in autorisierte Tests, Labore, CTFs und kontrollierte Umgebungen. Alle Werkzeuge hier sind für autorisierte Forschung und defensive Zwecke gedacht.</p>
+      </div>
+      <div>
+        <span class="eyebrow">Arbeitsmuster</span>
+        <div class="flow" style="margin:10px 0 24px">
+          <b>Hypothese</b> → Test → Log → Fehleranalyse → <b>Fix</b> → Doku
+        </div>
+        <span class="eyebrow">Schwerpunkte</span>
+        <div class="skill-list">
+          <span class="tag">Python</span><span class="tag">C / C++</span><span class="tag">Embedded</span>
+          <span class="tag">RF / SDR</span><span class="tag">LoRa / LoRaWAN</span><span class="tag">Netzwerke</span>
+          <span class="tag">Virtualisierung</span><span class="tag">Lokale KI</span><span class="tag">Homelab</span>
+          <span class="tag">Dokumentation</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="wrap foot-inner">
+    <div>
+      <a href="#top" class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a0e16"/><path d="M4 20 L9 20 L11 12 L14 24 L17 8 L20 20 L28 20" fill="none" stroke="#00e5c7" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg> G4ME<b>OVER</b></a>
+      <div class="foot-meta" style="margin-top:10px">Yanis Ameseder · St. Gallen · Open Source Security &amp; RF</div>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/G4MEOVER18" target="_blank" rel="noopener">GitHub</a>
+      <a href="#tools">Tools</a>
+      <a href="#flasher">Flasher</a>
+      <a href="#support">Support</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Externe Libs: nur auf GitHub Pages/HTTPS aktiv -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module" src="https://unpkg.com/esp-web-tools@10.0.0/dist/web/install-button.js?module"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+   REPO-KATALOG  (datengetrieben — von CI aktualisierbar)
+   Nur ÖFFENTLICHE Repos. cat = Kategorie, s = Stars, w = Wiki
+   ════════════════════════════════════════════════════════════ */
+const GH = "https://github.com/G4MEOVER18/";
+const REPOS = [
+  {n:"g4meover-one-x", cat:"Flagship", lang:"Python", s:0, w:false, flag:true,
+   d:"Overkill-Linux-Handheld (RK3576, 5\"-Touch): HyperRF-SDR 100kHz–6GHz, voller RF-Stack, 5G/NTN/GNSS/UWB/Radar — ein Gerät für Research, Pentest & Funk."},
+  {n:"G4MEOVER-FW", cat:"Flipper Zero", lang:"C", s:10, w:true, flag:true,
+   d:"Custom Flipper-Zero-Firmware (Momentum-Fork, API 87.1) mit lora_ukfe, CH-DE BadUSB und G4MEOVER-Branding.", rel:true},
+  {n:"ProtoPirate", cat:"Flipper Zero", lang:"C", s:28, w:true, flag:true,
+   d:"Car-Key-Fob RF-Decoder/Analyzer/Emulator. 27+ Protokolle (KIA, Ford, VAG, PSA, Honda…), Rolling Code, KeeLoq, AES128."},
+  {n:"RollForge", cat:"Flipper Zero", lang:"C", s:14, w:true,
+   d:"Vereinte Sub-GHz-Research-App: RollJam + RollLab + RF-Analyse unter einer Oberfläche."},
+  {n:"FlipperJammer", cat:"Flipper Zero", lang:"C", s:14, w:true,
+   d:"RF-Test-Suite über SubGHz/NRF24/BLE/WiFi/IR/RFID/NFC/USB — Momentum API 87.1."},
+  {n:"RollJam", cat:"Flipper Zero", lang:"C", s:11, w:true,
+   d:"Rolling-Code Capture- & Replay-Research-App für Flipper Zero."},
+  {n:"RollLab", cat:"Flipper Zero", lang:"C", s:6, w:true,
+   d:"Rolling-Code Vulnerability-Lab: Analyse, Replay, Rollback & Sync-Window-Probe."},
+  {n:"lora-ukfe", cat:"Flipper Zero", lang:"C", s:2, w:true,
+   d:"Flipper-App mit hierarchischem Befehls-Katalog, steuert den Heltec-Hub via GPIO-UART (ukfe_rf)."},
+  {n:"usb-army-penetrator", cat:"ESP32 / Funk", lang:"C++", s:10, w:false,
+   d:"USB/WiFi-Plattform auf ESP32: BadUSB, HID, Mass Storage, WiFi-Tooling, Remote-Agent, VNC. Fork von USBArmyKnife.", fw:true},
+  {n:"heltec-ukfe-rx", cat:"Ökosystem", lang:"C++", s:2, w:false,
+   d:"Heltec V3 (ESP32-S3+SX1262): 868-FSK + ESP-NOW Satellit/Hub. Signierte ukfe_rf-Befehle + ACK.", fw:true},
+  {n:"heltec-v4-hub", cat:"Ökosystem", lang:"C++", s:0, w:false,
+   d:"Heltec WiFi LoRa 32 V4 als Flipper-Hub (UART→ESP-NOW) + LoRa-Terminal + GPS + Menü.", fw:true},
+  {n:"lilygo-ukfe-rx", cat:"Ökosystem", lang:"C++", s:2, w:false,
+   d:"LilyGo T-Dongle S3 als ESP-NOW-Satellit mit TFT-Status. Signierte ukfe_rf-Befehle + ACK.", fw:true},
+  {n:"g4meover-wifi-relay", cat:"Ökosystem", lang:"C++", s:0, w:false,
+   d:"ESP32-WROOM als ESP-NOW-Koordinator (Flipper → Satelliten).", fw:true},
+  {n:"g4meover-deck", cat:"Ökosystem", lang:"Python", s:0, w:false,
+   d:"Raspberry-Pi-4 Ökosystem-OS: vereint Flipper/Heltec/LilyGo/WROOM/HackRF/Zigbee unter einem Vokabular (ukfe_rf)."},
+  {n:"g4meover-companion", cat:"Ökosystem", lang:"Python", s:0, w:false,
+   d:"Companion-Tools (PC/Pi): magtool, flipperbridge, vault-organizer, cockpit."},
+  {n:"g4meover-ecosystem", cat:"Ökosystem", lang:"C", s:0, w:false,
+   d:"Das zusammenwachsende Flipper-Ökosystem: Firmware-Feature-Mining, App-Verbesserungen & Ideen-Recherche."},
+  {n:"dogytag-firmware", cat:"ESP32 / Funk", lang:"C++", s:4, w:true,
+   d:"Multi-Radio Haustier-Tracking: LoRaWAN EU868 + Raw LoRa 868/433 + BLE-Geofence + GPS. ESP32S3, Heltec, CubeCell."},
+  {n:"stm32-usb-fuzzer", cat:"ESP32 / Funk", lang:"C", s:0, w:true,
+   d:"Hardware-USB-Descriptor-Fuzzer auf STM32F103 — UART-Steuerung, Reset-Counter, 30 Testmodi."},
+  {n:"RadioGateway", cat:"ESP32 / Funk", lang:"C++", s:1, w:true,
+   d:"ESP32-Gateway: WiFi AP/STA, WebUI, MQTT, SD-Config, TFT (LovyanGFX). Flashfertige .bin."},
+  {n:"SoundNode_v1", cat:"ESP32 / Funk", lang:"C", s:1, w:true,
+   d:"ESP32 Bluetooth-A2DP MP3-Player (ESP-IDF): SD → BT-Audio, LovyanGFX-UI."},
+  {n:"ESP32S3-MiniPwn-Dashboard", cat:"ESP32 / Funk", lang:"C++", s:0, w:true,
+   d:"ESP32-S3 Display-Dashboard (ST7789 1.47\"): WLAN/Zeit/Status, Secrets via Header."},
+  {n:"ESP32-LCD-Time-SD-FTP", cat:"ESP32 / Funk", lang:"C++", s:0, w:true,
+   d:"ESP32-S3 Dashboard: NTP-Uhr, SD-Logging, WebServer + FTP."},
+  {n:"ESP32-CaptivePortal", cat:"ESP32 / Funk", lang:"C++", s:0, w:true,
+   d:"ESP32 catch-all Captive Portal (DNS-Wildcard + WebServer)."},
+  {n:"LoRa-Ra-08-CubeCell", cat:"ESP32 / Funk", lang:"C++", s:1, w:true,
+   d:"LoRa RX-Finder für Heltec CubeCell (ASR6502) @ 433 MHz — RSSI hot/cold."},
+  {n:"TFT-AutoProbe", cat:"ESP32 / Funk", lang:"C++", s:0, w:true,
+   d:"ESP32 TFT-Diagnose-Firmware (ST7789) — prüft Init/Rotation/Backlight in Sekunden."},
+  {n:"g4meover-security-suite", cat:"Security / Pentest", lang:"Python", s:2, w:false,
+   d:"All-in-One Security-Suite für Windows — 27 Module (Recon, WLAN, Hardening, Forensik, Reporting). Catppuccin Mocha.", pages:true},
+  {n:"g4meover-pentest-cockpit", cat:"Security / Pentest", lang:"Python", s:2, w:true,
+   d:"KI-gestütztes Pentest-Cockpit für autorisierte Security-Labs (PySide6, cyber-red/blue)."},
+  {n:"web-recon-toolkit", cat:"Security / Pentest", lang:"Python", s:2, w:true,
+   d:"Web-Reconnaissance: Tech-Fingerprinting, Directory-Enum, DNS, Wayback-Scan. 5 Module, reines Python stdlib."},
+  {n:"sqli-hunter", cat:"Security / Pentest", lang:"Python", s:2, w:true,
+   d:"SQL-Injection-Scanner: Error/Boolean/Time-based, DBMS-Fingerprinting, UNION-Extraktion. Python stdlib."},
+  {n:"subdomain-takeover-scanner", cat:"Security / Pentest", lang:"Python", s:1, w:true,
+   d:"Subdomain-Takeover-Scanner: 35+ Provider-Fingerprints, CNAME-Ketten, TLS-SAN-Enumeration."},
+  {n:"netmap", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"Netzwerk-Recon: TCP/UDP-Portscan, Banner-Grabbing, OS-Fingerprinting, Script-Engine. Python stdlib."},
+  {n:"hashpwn", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"Hash-Identifikation & -Analyse: 35+ Typen, Wörterbuch-/Regel-/Maskenangriff, Potfile-Resume."},
+  {n:"jwt-pwn", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"JWT-Toolkit für autorisierte Pentests: alg:none, RS256→HS256-Confusion, kid-Injection. Python stdlib."},
+  {n:"http-header-auditor", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"OWASP HTTP-Security-Header-Prüfer: HSTS, CSP, X-Frame-Options… CI/CD-kompatibel (Exit-Code 1 bei HIGH)."},
+  {n:"cors-scanner", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"CORS-Fehlkonfigurations-Scanner: reflektierte Origins, Null-Origin, Wildcard, Suffix-Bypass. Python stdlib."},
+  {n:"xss-hunter", cat:"Security / Pentest", lang:"Python", s:0, w:true,
+   d:"XSS-Scanner: 44 Payloads in 7 Kontexten, WAF-Erkennung, DOM-Sink-Analyse, Crawl-Modus. Python stdlib."}
+];
+
+const LANG_COLORS = { "Python":"#3572A5", "C":"#555555", "C++":"#f34b7d", "JavaScript":"#f1e05a", "HTML":"#e34c26" };
+
+/* ── Firmware-Targets für den ESP-Web-Flasher ──
+   status "ready"  → Manifest vorhanden (CI baut .bin + manifest.json)
+   status "pending"→ Build via CI folgt; zeigt Repo-Link            */
+const FIRMWARES = [
+  {id:"usb-army-penetrator", label:"USB Army Penetrator (ESP32)", chip:"ESP32", status:"pending"},
+  {id:"heltec-v4-hub",       label:"Heltec V4 Hub (ESP32-S3)",    chip:"ESP32-S3", status:"pending"},
+  {id:"heltec-ukfe-rx",      label:"Heltec V3 Satellit (ESP32-S3)", chip:"ESP32-S3", status:"pending"},
+  {id:"lilygo-ukfe-rx",      label:"LilyGo T-Dongle S3 Satellit", chip:"ESP32-S3", status:"pending"},
+  {id:"g4meover-wifi-relay", label:"WiFi-Relay (ESP32-WROOM)",    chip:"ESP32", status:"pending"},
+  {id:"RadioGateway",        label:"RadioGateway (ESP32)",         chip:"ESP32", status:"pending"}
+];
+
+/* ════════════════════════════════════════════════════════════
+   RENDER: Stats, Chips, Cards
+   ════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+let activeCat = "Alle", query = "", sortMode = "stars";
+
+function cats() {
+  const order = ["Flagship","Ökosystem","Flipper Zero","ESP32 / Funk","Security / Pentest"];
+  const present = [...new Set(REPOS.map(r=>r.cat))];
+  return ["Alle", ...order.filter(c=>present.includes(c))];
+}
+function renderStats() {
+  const stars = REPOS.reduce((a,r)=>a+r.s,0);
+  animateNum("#stat-repos", REPOS.length);
+  animateNum("#stat-stars", stars);
+  animateNum("#stat-cats", cats().length-1);
+  animateNum("#stat-fw", FIRMWARES.length);
+}
+function animateNum(sel, target) {
+  const el = $(sel); if(!el) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ el.textContent=target; return; }
+  let cur=0; const step=Math.max(1,Math.ceil(target/28));
+  const t=setInterval(()=>{ cur+=step; if(cur>=target){cur=target;clearInterval(t);} el.textContent=cur; }, 26);
+}
+function renderChips() {
+  $("#chips").innerHTML = cats().map(c=>{
+    const count = c==="Alle" ? REPOS.length : REPOS.filter(r=>r.cat===c).length;
+    return `<button class="chip" role="button" aria-pressed="${c===activeCat}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}<span class="c">${count}</span></button>`;
+  }).join("");
+}
+function setCat(c){ activeCat=c; renderChips(); renderCards(); }
+function renderCards() {
+  let list = REPOS.filter(r=>{
+    const okCat = activeCat==="Alle" || r.cat===activeCat;
+    const okQ = !query || (r.n+" "+r.d+" "+r.lang).toLowerCase().includes(query);
+    return okCat && okQ;
+  });
+  if (sortMode==="stars") list.sort((a,b)=>b.s-a.s || a.n.localeCompare(b.n));
+  else if (sortMode==="name") list.sort((a,b)=>a.n.localeCompare(b.n));
+  const box = $("#cards");
+  if (!list.length){ box.innerHTML = `<div class="no-res">Keine Treffer für „${query}". Filter zurücksetzen.</div>`; return; }
+  box.innerHTML = list.map(r=>{
+    const lc = LANG_COLORS[r.lang] || "#888";
+    const links = [`<a class="pill" href="${GH}${r.n}" target="_blank" rel="noopener">Code</a>`];
+    if (r.w) links.push(`<a class="pill" href="${GH}${r.n}/wiki" target="_blank" rel="noopener">Wiki</a>`);
+    if (r.rel) links.push(`<a class="pill live" href="${GH}${r.n}/releases/latest" target="_blank" rel="noopener">● Release</a>`);
+    if (r.pages) links.push(`<a class="pill live" href="https://g4meover18.github.io/${r.n}/" target="_blank" rel="noopener">● Live-Demo</a>`);
+    if (r.fw) links.push(`<a class="pill" href="#flasher">⚡ Flashen</a>`);
+    return `<article class="card${r.flag?' flag':''}">
+      <div class="card-head"><h3><a href="${GH}${r.n}" target="_blank" rel="noopener">${r.n}</a></h3></div>
+      <p class="desc">${r.d}</p>
+      <div class="card-meta">
+        <span><span class="lang-dot" style="background:${lc}"></span>${r.lang||"—"}</span>
+        <span>★ ${r.s}</span>
+        <span>${r.cat}</span>
+      </div>
+      <div class="card-links">${links.join("")}</div>
+    </article>`;
+  }).join("");
+}
+
+/* ── Flasher-Logik ── */
+function renderFwSelect(){
+  $("#fwSelect").innerHTML = FIRMWARES.map(f=>`<option value="${f.id}">${f.label}</option>`).join("");
+  onFwChange();
+}
+function onFwChange(){
+  const f = FIRMWARES.find(x=>x.id===$("#fwSelect").value);
+  const status = $("#fwStatus"), cta = $("#flashCta");
+  if (f.status==="ready"){
+    status.innerHTML = `<span style="color:var(--ok)">● Firmware bereit · ${f.chip}</span>`;
+    cta.innerHTML = `<esp-web-install-button manifest="firmware/${f.id}/manifest.json"><button slot="activate" class="btn btn-primary">⚡ ${f.label} flashen</button><span slot="unsupported">Browser unterstützt kein Web Serial.</span><span slot="not-allowed">Nur über HTTPS/localhost.</span></esp-web-install-button>`;
+  } else {
+    status.innerHTML = `<span style="color:var(--warn)">◐ Firmware-Build folgt via CI · ${f.chip}</span>`;
+    cta.innerHTML = `<a class="btn btn-ghost" href="${GH}${f.id}" target="_blank" rel="noopener">Repo &amp; Build-Anleitung öffnen ↗</a>`;
+  }
+}
+
+/* ── QR-Codes & Copy ── */
+function makeQR(id, text){
+  const el = document.getElementById(id); if(!el || !window.QRCode) return;
+  try { new QRCode(el, { text, width:140, height:140, colorDark:"#0a0e16", colorLight:"#ffffff", correctLevel: QRCode.CorrectLevel.M }); }
+  catch(e){ el.innerHTML = `<span style="color:#333;font-size:.7rem">QR n/v</span>`; }
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest(".copy-btn"); if(!b) return;
+  const txt = b.dataset.copy;
+  navigator.clipboard?.writeText(txt).then(()=>{
+    const old=b.textContent; b.textContent="✓ Kopiert"; b.classList.add("done");
+    setTimeout(()=>{ b.textContent=old; b.classList.remove("done"); },1600);
+  }).catch(()=>{
+    const r=document.createRange(); const n=document.createTextNode(txt);
+    b.after(n); r.selectNode(n); getSelection().removeAllRanges(); getSelection().addRange(r);
+    setTimeout(()=>n.remove(),100);
+  });
+});
+
+/* ── Nav / Theme ── */
+function toggleNav(){
+  const l=$("#navLinks"), t=document.querySelector(".nav-toggle");
+  const open = l.getAttribute("data-open")==="true";
+  l.setAttribute("data-open", String(!open)); t.setAttribute("aria-expanded", String(!open));
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute("data-theme");
+  const dark = cur ? cur==="dark" : !matchMedia("(prefers-color-scheme: light)").matches;
+  const next = dark ? "light":"dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try{ localStorage.setItem("g4-theme", next); }catch(e){}
+}
+(function initTheme(){ try{ const s=localStorage.getItem("g4-theme"); if(s) document.documentElement.setAttribute("data-theme",s); }catch(e){} })();
+document.querySelectorAll(".nav-links a").forEach(a=>a.addEventListener("click",()=>{
+  $("#navLinks").setAttribute("data-open","false");
+}));
+
+/* ── Spektrum-Hero (SDR-Wasserfall, dezent) ── */
+function spectrum(){
+  const c = $("#spectrum"); if(!c) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const ctx = c.getContext("2d"); let W,H, t=0;
+  function size(){ const r=c.getBoundingClientRect(); W=c.width=r.width*devicePixelRatio; H=c.height=r.height*devicePixelRatio; }
+  size(); addEventListener("resize", size);
+  const bars = 64;
+  function frame(){
+    ctx.clearRect(0,0,W,H); t+=0.015;
+    const bw = W/bars;
+    for(let i=0;i<bars;i++){
+      const n = (Math.sin(i*0.4+t)*0.5+0.5)*(Math.sin(i*0.13-t*1.7)*0.5+0.5);
+      const h = (0.12 + n*0.78) * H;
+      const hue = 168 + n*150; // cyan → magenta
+      ctx.fillStyle = `hsla(${hue},80%,55%,${0.08+n*0.14})`;
+      ctx.fillRect(i*bw, H-h, bw*0.82, h);
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Init ── */
+$("#search").addEventListener("input", e=>{ query=e.target.value.trim().toLowerCase(); renderCards(); });
+$("#sort").addEventListener("change", e=>{ sortMode=e.target.value; renderCards(); });
+renderStats(); renderChips(); renderCards(); renderFwSelect(); spectrum();
+addEventListener("load", ()=>{ makeQR("qr-pp","https://paypal.me/Freakbank1"); makeQR("qr-btc","bitcoin:39vZWmnUwDReQ15BwqQXzyqVQ6U8LardEf"); });
+</script>
+</body>
+</html>

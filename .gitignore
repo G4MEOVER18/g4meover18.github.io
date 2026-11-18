@@ -1,0 +1,5 @@
+# Firmware-Binaries kommen aus CI-Releases, nicht ins Repo-History-Gewicht
+firmware/**/*.bin
+firmware/**/*.elf
+.DS_Store
+Thumbs.db
