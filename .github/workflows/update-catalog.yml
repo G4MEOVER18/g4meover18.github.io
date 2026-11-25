@@ -1,0 +1,40 @@
+name: Katalog aktualisieren
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Öffentliche Repos abfragen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Nur öffentliche Repos abfragen; das Skript verwirft zusätzlich alles Nicht-Öffentliche.
+          gh repo list G4MEOVER18 --visibility public --limit 200 \
+            --json name,description,primaryLanguage,isArchived,visibility,stargazerCount,hasWikiEnabled \
+            > "$RUNNER_TEMP/repos.json"
+      - name: REPOS-Array neu erzeugen
+        run: python3 scripts/update_catalog.py "$RUNNER_TEMP/repos.json" index.html
+      - name: Pull Request erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet index.html; then echo "Keine Änderungen."; exit 0; fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BR="chore/catalog-$(date +%Y%m%d)"
+          git checkout -B "$BR"
+          git commit -am "chore: Repo-Katalog automatisch aktualisiert"
+          git push -u origin "$BR" --force-with-lease
+          gh pr create --base main --head "$BR" \
+            --title "chore: Repo-Katalog aktualisiert" \
+            --body "Automatisch aus \`gh repo list\` erzeugt (nur öffentliche, nicht archivierte Repos)." || true
