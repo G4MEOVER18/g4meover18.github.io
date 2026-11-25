@@ -37,8 +37,11 @@ jobs:
         name: Secret-/Config-Header aus Beispiel erzeugen
         run: |
           shopt -s nullglob globstar
-          for ex in **/*.example; do
-            tgt="${ex%.example}"
+          for ex in **/*.example **/*.example.*; do
+            case "$ex" in
+              *.example)   tgt="${ex%.example}" ;;      # foo.h.example  -> foo.h
+              *.example.*) tgt="${ex/.example./.}" ;;   # foo.example.h  -> foo.h
+            esac
             if [ ! -f "$tgt" ]; then cp "$ex" "$tgt"; echo "::notice::$tgt aus $ex erzeugt (CI-Platzhalter)"; fi
           done
       - if: steps.c.outputs.ok == 'yes'
