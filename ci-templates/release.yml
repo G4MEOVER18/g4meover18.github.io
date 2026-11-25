@@ -1,0 +1,24 @@
+name: Release
+# Tag-basiertes Release: `git tag v1.2.3 && git push --tags`
+# Erzeugt ein GitHub-Release mit automatischem Changelog (Commits seit dem letzten Tag).
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Changelog erzeugen
+        run: |
+          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          range=${prev:+$prev..}${GITHUB_REF_NAME}
+          { echo "## Änderungen"; echo; git log "$range" --no-merges --pretty='- %s (%h)'; } > CHANGELOG.md
+      - name: Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md
